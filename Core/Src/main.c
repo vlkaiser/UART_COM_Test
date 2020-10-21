@@ -118,7 +118,6 @@ int main(void)
 Station_Status.ctrlStatus = 0;
 Station_Status.obs1Status = 1;
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,6 +127,7 @@ Station_Status.obs1Status = 1;
 
 	#ifdef TRANSMITTER_BOARD
 	  /* Wait for User push-button press before starting the Communication.  In the meantime, LED2 is blinking */
+
 
 	   while(UserButtonStatus == 0)
 	   {
@@ -168,7 +168,7 @@ Station_Status.obs1Status = 1;
 		//Wait
 		HAL_Delay(3000);
 
-    /* USER CODE END WHILE */
+		/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -292,11 +292,14 @@ void CtrlSendData()
 {
 
 	  /* The board sends the message and expects to receive it back */
+	memcpy(buffer, &Station_Status, sizeof(Station_Status));
 
 	  /*##-2- Start the transmission process #####################################*/
 	  /* While the UART in reception process, user can transmit data through "aTxBuffer" buffer */
 
 	  if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE)!= HAL_OK)
+	//if(HAL_UART_Transmit_IT(&huart2, (uint8_t *)buffer, sizeof(buffer), 50)!=HAL_OK)
+	//if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)buffer, sizeof(buffer))!=HAL_OK)
 	  {
 		Error_Handler();
 	  }
@@ -311,6 +314,7 @@ void CtrlSendData()
 
 	  /*##-4- Put UART peripheral in reception process ###########################*/
 	  if(HAL_UART_Receive_IT(&huart2, (uint8_t *)aRxBuffer, RXBUFFERSIZE) != HAL_OK)
+	//if(HAL_UART_Receive_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
 	  {
 		Error_Handler();
 	  }
@@ -322,9 +326,12 @@ void PeriphReceiveData()
 
 		/*##-2- Put UART peripheral in reception process ###########################*/
 		if(HAL_UART_Receive_IT(&huart2, (uint8_t *)aRxBuffer, RXBUFFERSIZE) != HAL_OK)
+	//if(HAL_UART_Receive_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
 		{
 		  Error_Handler();
 		}
+
+	memcpy(&Station_Status, &buffer, sizeof(buffer));
 
 		/*##-3- Wait for the end of the transfer ###################################*/
 		/* While waiting for message to come from the other board, LED2 is
@@ -345,7 +352,13 @@ void PeriphReceiveData()
 		UartReady = RESET;
 		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-
+		/*##-4- Start the transmission process #####################################*/
+		/* While the UART in reception process, user can transmit data through "aTxBuffer" buffer */
+		if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE)!= HAL_OK)
+		//if(HAL_UART_Transmit_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
+		{
+		  Error_Handler();
+		}
 }
 
 

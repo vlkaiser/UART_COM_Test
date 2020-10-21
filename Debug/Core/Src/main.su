@@ -3,10 +3,10 @@ main.c:182:6:SystemClock_Config	112	static
 main.c:223:13:MX_USART2_UART_Init	8	static
 main.c:258:13:MX_GPIO_Init	48	static
 main.c:291:6:CtrlSendData	8	static
-main.c:319:6:PeriphReceiveData	8	static
-main.c:360:6:HAL_UART_TxCpltCallback	16	static
-main.c:374:6:HAL_UART_RxCpltCallback	16	static
-main.c:389:6:HAL_UART_ErrorCallback	16	static
-main.c:400:6:HAL_GPIO_EXTI_Callback	16	static
-main.c:415:17:Buffercmp	24	static
-main.c:437:6:Error_Handler	8	static
+main.c:323:6:PeriphReceiveData	8	static
+main.c:373:6:HAL_UART_TxCpltCallback	16	static
+main.c:387:6:HAL_UART_RxCpltCallback	16	static
+main.c:402:6:HAL_UART_ErrorCallback	16	static
+main.c:413:6:HAL_GPIO_EXTI_Callback	16	static
+main.c:428:17:Buffercmp	24	static
+main.c:450:6:Error_Handler	8	static
