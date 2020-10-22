@@ -51,10 +51,14 @@ __IO ITStatus UartReady = RESET;
 __IO uint32_t UserButtonStatus = 0;  /* set to 1 after User Button interrupt  */
 
 /* Buffer used for transmission */
-uint8_t aTxBuffer[] = "Hello World";
+uint8_t aTxBuffer[] = "HH";
 
 /* Buffer used for reception */
 uint8_t aRxBuffer[RXBUFFERSIZE];
+
+/* Storage Value */
+uint8_t statusVal;
+uint8_t addrVal;
 
 /* USER CODE END PV */
 
@@ -87,7 +91,8 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -109,6 +114,16 @@ int main(void)
   __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);		//Activate Flags RXNE
   __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);		//Activate flags TX
 
+  HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE);
+
+  aTxBuffer[0] = 2;
+  aTxBuffer[1] = 3;
+  /*
+  for (int i = 0; i < TXBUFFERSIZE; i++)
+  {
+	  aTxBuffer[i] = 1;
+  }
+*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,7 +132,19 @@ int main(void)
   {
 
 	 // HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+	  if (addrVal == 2)
+	  {
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		  HAL_Delay(200);
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		  HAL_Delay(200);
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		  HAL_Delay(200);
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		  HAL_Delay(500);
 
+		  addrVal = 0;
+	  }
 
     /* USER CODE END WHILE */
 
@@ -239,7 +266,11 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-
+int buffToStatus(uint8_t* buffer)
+{
+    statusVal = buffer[1];
+    addrVal = buffer[0];
+}
 
 /**
   * @brief  Tx Transfer completed callback
@@ -265,7 +296,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart2)
 {
 
 	HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-
+	statusVal = aRxBuffer[1];
+	addrVal = aRxBuffer[0];
 }
 
 /**

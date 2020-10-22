@@ -29,7 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
-
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -42,11 +42,12 @@ extern "C" {
 
 /* Size of Transmission buffer */
 //#define TXBUFFERSIZE                      (COUNTOF(aTxBuffer) - 1)
-#define TXBUFFERSIZE                      11
+#define TXBUFFERSIZE                      2
 /* Size of Reception buffer */
 #define RXBUFFERSIZE                      TXBUFFERSIZE
 
 /* Exported macro ------------------------------------------------------------*/
+//#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof((__BUFFER__)))
 //#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 
 /* USER CODE END ET */
