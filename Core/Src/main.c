@@ -38,7 +38,6 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
-#define TRANSMITTER_BOARD
 
 /* USER CODE END PM */
 
@@ -47,19 +46,12 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
-struct StationStatus_t {
-	uint8_t	ctrlStatus;
-	uint8_t	obs1Status;
-
-};
-struct StationStatus_t Station_Status;
-char buffer[sizeof(Station_Status)];
 
 __IO ITStatus UartReady = RESET;
 __IO uint32_t UserButtonStatus = 0;  /* set to 1 after User Button interrupt  */
 
 /* Buffer used for transmission */
-uint8_t aTxBuffer[] = " ****UART_TwoBoards_ComIT****  ****UART_TwoBoards_ComIT****  ****UART_TwoBoards_ComIT**** ";
+uint8_t aTxBuffer[] = "Hello World";
 
 /* Buffer used for reception */
 uint8_t aRxBuffer[RXBUFFERSIZE];
@@ -72,9 +64,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-static uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength);
-void CtrlSendData(void);
-void PeriphReceiveData(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -115,8 +105,9 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-Station_Status.ctrlStatus = 0;
-Station_Status.obs1Status = 1;
+  //Enable interrupts for transmission complete
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);		//Activate Flags RXNE
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);		//Activate flags TX
 
   /* USER CODE END 2 */
 
@@ -125,50 +116,10 @@ Station_Status.obs1Status = 1;
   while (1)
   {
 
-	#ifdef TRANSMITTER_BOARD
-	  /* Wait for User push-button press before starting the Communication.  In the meantime, LED2 is blinking */
+	 // HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 
 
-	   while(UserButtonStatus == 0)
-	   {
-	       /* Toggle LED2*/
-	       HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-	       HAL_Delay(100);
-	   }
-
-	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-	  CtrlSendData();
-
-	#else
-	  PeriphReceiveData();
-
-	#endif
-
-		/*##-5- Wait for the end of the transfer ###################################*/
-		while (UartReady != SET)
-		{
-		}
-
-		/* Reset transmission flag */
-		UartReady = RESET;
-
-		/*##-6- Compare the sent and received buffers ##############################*/
-		/*
-		if(Buffercmp((uint8_t*)aTxBuffer,(uint8_t*)aRxBuffer,RXBUFFERSIZE))
-		{
-		  Error_Handler();
-		}
-*/
-
-		/* Turn on LED2 if test passes then enter infinite loop */
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-		UserButtonStatus = 0;		//clear UserButtonStatus
-
-		//Wait
-		HAL_Delay(3000);
-
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -231,7 +182,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -269,7 +220,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : BUTTON_USER_Pin */
   GPIO_InitStruct.Pin = BUTTON_USER_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BUTTON_USER_GPIO_Port, &GPIO_InitStruct);
 
@@ -288,79 +239,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void CtrlSendData()
-{
-
-	  /* The board sends the message and expects to receive it back */
-	memcpy(buffer, &Station_Status, sizeof(Station_Status));
-
-	  /*##-2- Start the transmission process #####################################*/
-	  /* While the UART in reception process, user can transmit data through "aTxBuffer" buffer */
-
-	  if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE)!= HAL_OK)
-	//if(HAL_UART_Transmit_IT(&huart2, (uint8_t *)buffer, sizeof(buffer), 50)!=HAL_OK)
-	//if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)buffer, sizeof(buffer))!=HAL_OK)
-	  {
-		Error_Handler();
-	  }
-
-	  /*##-3- Wait for the end of the transfer ###################################*/
-	  while (UartReady != SET)
-	  {
-	  }
-
-	  /* Reset transmission flag */
-	  UartReady = RESET;
-
-	  /*##-4- Put UART peripheral in reception process ###########################*/
-	  if(HAL_UART_Receive_IT(&huart2, (uint8_t *)aRxBuffer, RXBUFFERSIZE) != HAL_OK)
-	//if(HAL_UART_Receive_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
-	  {
-		Error_Handler();
-	  }
-}
-
-void PeriphReceiveData()
-{
-		/* The board receives the message and sends it back */
-
-		/*##-2- Put UART peripheral in reception process ###########################*/
-		if(HAL_UART_Receive_IT(&huart2, (uint8_t *)aRxBuffer, RXBUFFERSIZE) != HAL_OK)
-	//if(HAL_UART_Receive_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
-		{
-		  Error_Handler();
-		}
-
-	memcpy(&Station_Status, &buffer, sizeof(buffer));
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		/* While waiting for message to come from the other board, LED2 is
-		   blinking according to the following pattern: a double flash every half-second */
-		while (UartReady != SET)
-		{
-			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-			HAL_Delay(100);
-			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-			HAL_Delay(100);
-			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-			HAL_Delay(100);
-			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-			HAL_Delay(500);
-		}
-
-		/* Reset transmission flag */
-		UartReady = RESET;
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-		/*##-4- Start the transmission process #####################################*/
-		/* While the UART in reception process, user can transmit data through "aTxBuffer" buffer */
-		if(HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE)!= HAL_OK)
-		//if(HAL_UART_Transmit_IT(&huart2, (uint8_t *)buffer, sizeof(buffer))!=HAL_OK)
-		{
-		  Error_Handler();
-		}
-}
-
 
 
 /**
@@ -372,8 +250,7 @@ void PeriphReceiveData()
   */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
-  /* Set transmission flag: transfer complete */
-  UartReady = SET;
+	 HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
 }
 
@@ -386,9 +263,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
   */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart2)
 {
-  /* Set transmission flag: transfer complete */
-  UartReady = SET;
 
+	HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 
 }
 
@@ -414,32 +290,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if(GPIO_Pin == BUTTON_USER_Pin)
   {
-    UserButtonStatus = 1;
+	  HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE);
   }
 }
-
-/**
-  * @brief  Compares two buffers.
-  * @param  pBuffer1, pBuffer2: buffers to be compared.
-  * @param  BufferLength: buffer's length
-  * @retval 0  : pBuffer1 identical to pBuffer2
-  *         >0 : pBuffer1 differs from pBuffer2
-  */
-static uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
-{
-  while (BufferLength--)
-  {
-    if ((*pBuffer1) != *pBuffer2)
-    {
-      return BufferLength;
-    }
-    pBuffer1++;
-    pBuffer2++;
-  }
-
-  return 0;
-}
-
 
 /* USER CODE END 4 */
 

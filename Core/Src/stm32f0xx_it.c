@@ -53,6 +53,12 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/* Buffer used for transmission */
+extern uint8_t aTxBuffer;
+
+/* Buffer used for reception */
+extern uint8_t aRxBuffer[RXBUFFERSIZE];
+
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -163,6 +169,9 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
+
+  HAL_UART_Receive_IT(&huart2, aRxBuffer, RXBUFFERSIZE);
+  //HAL_UART_Transmit_IT(&huart2, (uint8_t*)aTxBuffer, TXBUFFERSIZE);
 
   /* USER CODE END USART2_IRQn 1 */
 }
